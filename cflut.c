@@ -41,6 +41,14 @@ SOCKET client;
  */
 int parse_dimensions(char *dim, int *width, int *height);
 threadpool_t* hThreadpool(int thread_count, int queue_size, int flags);
+void getCanvasSize(SOCKET client, int *width, int *height);
+
+void getCanvasSize(SOCKET client, int *width, int *height) {
+    sendMessage(client, "SIZE");
+    char* canvasSize = receiveMessage(client);
+    printf("%s", canvasSize);
+    sscanf(canvasSize, "SIZE %d %d", width, height);
+}
 
 int parse_dimensions(char *dim, int *width, int *height) {
     char *token = strtok(dim, ":");
@@ -68,6 +76,7 @@ threadpool_t* hThreadpool(int thread_count, int queue_size, int flags){
 }
 
 int main(int argc, char *argv[]) {
+    client = initClient();
     int thread_count = DEFAULT_THREAD_COUNT;
     int queue_size = DEFAULT_QUEUE_SIZE;
 
@@ -76,9 +85,9 @@ int main(int argc, char *argv[]) {
     int opt;
     char *image_path = NULL;
     char *dim = NULL;
-    int width = DEFAULT_WIDTH;
-    int height = DEFAULT_HEIGHT;
-
+    int width;
+    int height;
+    
     // Parse command-line options
     while ((opt = getopt(argc, argv, "d:t:q:")) != -1) {
         switch (opt) {
@@ -109,12 +118,14 @@ int main(int argc, char *argv[]) {
         log_error("Dimension is of invalid format or is not provided.");
         return 1;
     }
+    if (dim == NULL) {
+        getCanvasSize(client, &width, &height);
+    }
 
     image imageStruct = loadImage(image_path);
     resizeImage(&imageStruct, width, height, DEFAULT_CHANNELS);
     chunk *imageChunks = makeChunks(imageStruct, thread_count);
 
-    client = initClient();
     int i;
     pool = hThreadpool(thread_count, queue_size, 0);
 

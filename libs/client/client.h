@@ -11,7 +11,7 @@
 
 #define HOST "pixelflut.uwu.industries"
 #define PORT "1234"
-#define DEFAULT_BUFFER 512
+#define DEFAULT_BUFFER 30
 
 SOCKET initClient();
 void sendMessage(SOCKET client, char* message);

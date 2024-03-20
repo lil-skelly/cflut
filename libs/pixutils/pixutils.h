@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <string.h>
-
+#include <winsock.h>
 #define MAX_PIXEL_STRING_LENGTH 30
 #define DEFAULT_CHANNELS 4
 // [STRUCTURES]

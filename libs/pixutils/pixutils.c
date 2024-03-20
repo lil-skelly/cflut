@@ -3,9 +3,9 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <string.h>
+#include "pixutils.h"
 #include "../client/client.h"
 #include "../log/log.h"
-#include "pixutils.h"
 
 #include "../stb_image/stb_image.h"
 #include "../stb_image/stb_image_resize2.h"
@@ -30,6 +30,7 @@ void hexifyPixel(int x, int y, color *c, char* buffer) {
         c->a
     );
 }
+
 /**
  * Divides an image into the specified number of chunks.
  *
