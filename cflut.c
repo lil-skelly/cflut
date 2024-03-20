@@ -7,8 +7,12 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <getopt.h>
+#include <pthread.h>
+
 #include "libs/client/client.h"
 #include "libs/pixutils/pixutils.h"
+
+#include "libs/threadpool/threadpool.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
@@ -21,7 +25,11 @@
 #pragma comment(lib, "Mswsock.lib")
 #pragma comment(lib, "AdvApi32.lib")
 
+#define DEFAULT_WIDTH 400
+#define DEFAULT_HEIGHT 400
+
 #define DEFAULT_THREAD_COUNT 4
+#define DEFAULT_QUEUE_SIZE 256
 
 SOCKET client;
 // [FUNCTION IMPLEMENTATIONS]
@@ -31,6 +39,9 @@ SOCKET client;
  * @param argc Number of command-line arguments.
  * @param argv Array of command-line arguments.
  */
+int parse_dimensions(char *dim, int *width, int *height);
+threadpool_t* hThreadpool(int thread_count, int queue_size, int flags);
+
 int parse_dimensions(char *dim, int *width, int *height) {
     char *token = strtok(dim, ":");
     if (token != NULL) {
@@ -46,20 +57,39 @@ int parse_dimensions(char *dim, int *width, int *height) {
     return 0;
 }
 
+threadpool_t* hThreadpool(int thread_count, int queue_size, int flags){
+    threadpool_t* pool = threadpool_create(thread_count, queue_size, flags);
+    if (pool == NULL) {
+        log_fatal("Unable to initialize thread pool.");
+        return 1;
+    }
+    log_info("Pool started with %d threads and queue size of %d\n", thread_count, queue_size);
+    return pool;
+}
+
 int main(int argc, char *argv[]) {
-    int opt;
     int thread_count = DEFAULT_THREAD_COUNT;
+    int queue_size = DEFAULT_QUEUE_SIZE;
+
+    threadpool_t *pool;
+    
+    int opt;
     char *image_path = NULL;
     char *dim = NULL;
+    int width = DEFAULT_WIDTH;
+    int height = DEFAULT_HEIGHT;
 
     // Parse command-line options
-    while ((opt = getopt(argc, argv, "d:t:")) != -1) {
+    while ((opt = getopt(argc, argv, "d:t:q:")) != -1) {
         switch (opt) {
             case 'd':
                 dim = optarg;
                 break;
             case 't':
                 thread_count = atoi(optarg);
+                break;
+            case 'q':
+                queue_size = atoi(optarg);
                 break;
             default:
                 log_error("Usage: %s [-d width:height] [-t threads] <image_path>\n", argv[0]);
@@ -75,7 +105,6 @@ int main(int argc, char *argv[]) {
     }
 
     // Get dimension
-    int width, height;
     if (dim != NULL && parse_dimensions(dim, &width, &height) != 0) {
         log_error("Dimension is of invalid format or is not provided.");
         return 1;
@@ -87,15 +116,33 @@ int main(int argc, char *argv[]) {
 
     client = initClient();
     int i;
-    for (i=0; i < thread_count; i++) {
-        log_info("%i\n", i);
-        log_info("X:%i Y:%i\n", imageChunks[i].x, imageChunks[i].y);
-        processChunk(imageStruct, imageChunks[i], i, client);
+    threadpool_t* pool = hThreadpool(thread_count, queue_size, 0);
+    
+    processArgs* argsArray = malloc(sizeof(processArgs) * thread_count);
+    if(argsArray == NULL) {
+        log_fatal("Unable to allocate memory for argsArray\n");
+        return 1;
     }
 
+    for (i=0; i < thread_count; i++) {
+        argsArray[i].image = imageStruct;
+        argsArray[i].chunk = imageChunks[i];
+        argsArray[i].client = client;
+
+        if (threadpool_add(pool, processChunk, &argsArray[i], 0) != 0) {
+            log_fatal("Error adding task for chunk %p", (void*)argsArray[i].chunk.start);
+            return 1;
+        }
+        log_info("[*] Task added: %i", i);
+    }
+    threadpool_destroy(pool, 0);
+    free(argsArray);
+    free(imageChunks);
+
     stbi_image_free(imageStruct.originalImage);
+    
     closesocket(client);
     WSACleanup();
+    
     return 0;
-
 }

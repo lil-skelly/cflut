@@ -16,7 +16,6 @@
  * @param x X-coordinate of the pixel.
  * @param y Y-coordinate of the pixel.
  * @param c Color of the pixel.
- * @return A string containing the hexadecimal representation of the pixel's color.
  */
 void hexifyPixel(int x, int y, color *c, char* buffer) {
     snprintf(
@@ -54,14 +53,20 @@ chunk* makeChunks(image image, int chunkCount) {
         chunks[i] = (chunk){
             .x = 0,
             .y = i * chunkSize,
-            .start = (color*)(image.originalImage + start * image.width * DEFAULT_CHANNELS), // removed * image.width
+            .start = (color*)(image.originalImage + start * image.width * DEFAULT_CHANNELS),
             .end = (color*)(image.originalImage + end * image.width * DEFAULT_CHANNELS),
         };
     }
     return chunks;
 }
 
-void processChunk(image image, chunk chunk, int chunkCount, SOCKET client) {
+void processChunk(void* args_) {
+    // Unpack arguments
+    processArgs* args = (processArgs*)args_;
+    image image = args->image;
+    chunk chunk = args->chunk;
+    SOCKET client = args->client;
+
     color* colorImage = (color*)image.originalImage;
     int x, y;
     log_info("Start address: %p\nEnd address: %p\n", (void*)chunk.start, (void*)chunk.end);
@@ -71,7 +76,7 @@ void processChunk(image image, chunk chunk, int chunkCount, SOCKET client) {
         int index = it - (color*)image.originalImage;
         x = (index % image.width);
         y = index / image.width;
-        hexifyPixel(x, y, it, pixelBuffer); //offset should be added at the X position
+        hexifyPixel(x, y, it, pixelBuffer);
         sendMessage(client, pixelBuffer);
     }
 }

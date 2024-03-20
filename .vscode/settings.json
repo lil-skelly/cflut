@@ -3,6 +3,7 @@
         "stb_image.h": "c",
         "log.h": "c",
         "client.h": "c",
-        "winsock2.h": "c"
+        "winsock2.h": "c",
+        "pthread.h": "c"
     }
 }

@@ -34,6 +34,12 @@ typedef struct {
     color *start, *end;
     int x, y;
 } chunk;
+
+typedef struct {
+    image image;
+    chunk chunk;
+    SOCKET client;
+} processArgs;
 // END OF [STRUCTURES]
 
 // [FUNCTION DECLARATIONS]
@@ -43,6 +49,6 @@ void resizeImage(image *image, int width, int height, int channels);
 void hexifyPixel(int x, int y, color *c, char* buffer);
 
 chunk* makeChunks(image image, int chunk_count);
-void processChunk(image image, chunk chunk, int chunkCount, SOCKET client);
+void processChunk(void* args_);
 // END OF [FUNCTION DECLARATIONS]
 #endif
