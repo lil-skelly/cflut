@@ -58,7 +58,7 @@ int parse_dimensions(char *dim, int *width, int *height) {
 }
 
 threadpool_t* hThreadpool(int thread_count, int queue_size, int flags){
-    threadpool_t* pool = threadpool_create(thread_count, queue_size, flags);
+    threadpool_t *pool = threadpool_create(thread_count, queue_size, flags);
     if (pool == NULL) {
         log_fatal("Unable to initialize thread pool.");
         return 1;
@@ -116,8 +116,8 @@ int main(int argc, char *argv[]) {
 
     client = initClient();
     int i;
-    threadpool_t* pool = hThreadpool(thread_count, queue_size, 0);
-    
+    pool = hThreadpool(thread_count, queue_size, 0);
+
     processArgs* argsArray = malloc(sizeof(processArgs) * thread_count);
     if(argsArray == NULL) {
         log_fatal("Unable to allocate memory for argsArray\n");
@@ -133,7 +133,7 @@ int main(int argc, char *argv[]) {
             log_fatal("Error adding task for chunk %p", (void*)argsArray[i].chunk.start);
             return 1;
         }
-        log_info("[*] Task added: %i", i);
+        log_info("[*] Task added (%i): %p", i+1, (void*)imageChunks[i].start);
     }
     threadpool_destroy(pool, 0);
     free(argsArray);

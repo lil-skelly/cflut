@@ -69,7 +69,6 @@ void processChunk(void* args_) {
 
     color* colorImage = (color*)image.originalImage;
     int x, y;
-    log_info("Start address: %p\nEnd address: %p\n", (void*)chunk.start, (void*)chunk.end);
     char pixelBuffer[MAX_PIXEL_STRING_LENGTH];
     for (color* it = chunk.start; it < chunk.end; it++) {
         // send pixel
