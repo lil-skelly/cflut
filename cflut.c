@@ -41,14 +41,7 @@ SOCKET client;
  */
 int parse_dimensions(char *dim, int *width, int *height);
 threadpool_t* hThreadpool(int thread_count, int queue_size, int flags);
-void getCanvasSize(SOCKET client, int *width, int *height);
 
-void getCanvasSize(SOCKET client, int *width, int *height) {
-    sendMessage(client, "SIZE");
-    char* canvasSize = receiveMessage(client);
-    printf("%s", canvasSize);
-    sscanf(canvasSize, "SIZE %d %d", width, height);
-}
 
 int parse_dimensions(char *dim, int *width, int *height) {
     char *token = strtok(dim, ":");
@@ -115,11 +108,8 @@ int main(int argc, char *argv[]) {
 
     // Get dimension
     if (dim != NULL && parse_dimensions(dim, &width, &height) != 0) {
-        log_error("Dimension is of invalid format or is not provided.");
+        log_error("[-] Dimension is of invalid format or is not provided.");
         return 1;
-    }
-    if (dim == NULL) {
-        getCanvasSize(client, &width, &height);
     }
 
     image imageStruct = loadImage(image_path);
@@ -131,7 +121,7 @@ int main(int argc, char *argv[]) {
 
     processArgs* argsArray = malloc(sizeof(processArgs) * thread_count);
     if(argsArray == NULL) {
-        log_fatal("Unable to allocate memory for argsArray\n");
+        log_fatal("[-x-] Unable to allocate memory for argsArray\n");
         return 1;
     }
 
@@ -141,10 +131,10 @@ int main(int argc, char *argv[]) {
         argsArray[i].client = client;
 
         if (threadpool_add(pool, processChunk, &argsArray[i], 0) != 0) {
-            log_fatal("Error adding task for chunk %p", (void*)argsArray[i].chunk.start);
+            log_fatal("[-x-] Error adding task for chunk %p", (void*)argsArray[i].chunk.start);
             return 1;
         }
-        log_info("[*] Task added (%i): %p", i+1, (void*)imageChunks[i].start);
+        log_info("[*] Processing (%i): %p", i+1, (void*)imageChunks[i].start);
     }
     threadpool_destroy(pool, 0);
     free(argsArray);

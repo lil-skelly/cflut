@@ -10,27 +10,6 @@
 #include "../stb_image/stb_image.h"
 #include "../stb_image/stb_image_resize2.h"
 
-
-/**
- * Convert a pixel's color to a hexadecimal string.
- * @param x X-coordinate of the pixel.
- * @param y Y-coordinate of the pixel.
- * @param c Color of the pixel.
- */
-void hexifyPixel(int x, int y, color *c, char* buffer) {
-    snprintf(
-        buffer,
-        MAX_PIXEL_STRING_LENGTH,
-        "PX %d %d %02x%02x%02x%02x\n", 
-        x, 
-        y, 
-        c->r, 
-        c->g, 
-        c->b, 
-        c->a
-    );
-}
-
 /**
  * Divides an image into the specified number of chunks.
  *
@@ -44,9 +23,8 @@ void hexifyPixel(int x, int y, color *c, char* buffer) {
  */
 chunk* makeChunks(image image, int chunkCount) {
     chunk* chunks = (chunk*)malloc(chunkCount * sizeof(chunk));
-    int imageSize = image.width * image.height;
     int chunkSize = image.width / chunkCount;
-    log_info("IMAGE SIZE: %d, CHUNK SIZE: %d\n", imageSize, chunkSize);
+    log_info("[*] CHUNK SIZE: %d\n", chunkSize);
     int i;
     for (i = 0; i < chunkCount; i++) {
         int start = i * chunkSize;
@@ -70,14 +48,34 @@ void processChunk(void* args_) {
 
     color* colorImage = (color*)image.originalImage;
     int x, y;
-    char pixelBuffer[MAX_PIXEL_STRING_LENGTH];
+
+    char pixelBuffer[MAX_PIXEL_STRING_LENGTH * 100]; // buffer for multiple pixels
+    int bufferIndex = 0;
+    int maxBufIndex = sizeof(pixelBuffer) - MAX_PIXEL_STRING_LENGTH;
     for (color* it = chunk.start; it < chunk.end; it++) {
-        // send pixel
         int index = it - (color*)image.originalImage;
         x = (index % image.width);
         y = index / image.width;
-        hexifyPixel(x, y, it, pixelBuffer);
-        sendMessage(client, pixelBuffer);
+        bufferIndex += snprintf(
+            pixelBuffer,
+            MAX_PIXEL_STRING_LENGTH,
+            "PX %d %d %02x%02x%02x%02x\n", 
+            x, 
+            y, 
+            it->r, 
+            it->g, 
+            it->b, 
+            it->a
+        );
+
+        if (bufferIndex >= maxBufIndex) {
+            sendMessage(client, pixelBuffer);
+            bufferIndex = 0;
+        }
+
+        if (bufferIndex > 0) {
+            sendMessage(client, pixelBuffer);
+        }
     }
 }
 /**
@@ -89,7 +87,7 @@ image loadImage(char* filename) {
     int width, height, channels;
     unsigned char *loadedImage = stbi_load(filename, &width, &height, &channels, 4);
     if (loadedImage == NULL) {
-        log_error("Could not load image <%s>\n", filename);
+        log_error("[-] Could not load image <%s>\n", filename);
         exit(1);
     }
     log_info("[*] Loaded image <%s>\n", filename, width, height, channels);

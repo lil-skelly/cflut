@@ -25,7 +25,7 @@ SOCKET initClient() {
 
     iResult = getaddrinfo(HOST, PORT, &hints, &result);
     if (iResult != 0) {
-        log_fatal("getaddrinfo failed: %d", iResult);
+        log_fatal("[!] getaddrinfo failed: %d", iResult);
         WSACleanup();
         return 1;
     }
@@ -34,7 +34,7 @@ SOCKET initClient() {
     ptr = result;
     clientSocket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
     if (clientSocket == INVALID_SOCKET) {
-        log_fatal("Error at socket(): %ld\n", WSAGetLastError());
+        log_fatal("[!] Error at socket(): %ld\n", WSAGetLastError());
         freeaddrinfo(result);
         WSACleanup();
         return 1;
@@ -48,7 +48,7 @@ SOCKET initClient() {
 
     freeaddrinfo(result);
     if (clientSocket == INVALID_SOCKET) {
-        log_fatal("Unable to connect to server!\n");
+        log_fatal("[!] Unable to connect to server!\n");
         WSACleanup();
         return 1;
     }
@@ -64,7 +64,7 @@ void sendMessage(SOCKET client, char* message) {
 
     int res = send(client, buffer, strlen(buffer), 0);
     if (res == SOCKET_ERROR) {
-        log_fatal("send() failed: %ld\n", WSAGetLastError());
+        log_fatal("[!] send() failed: %ld\n", WSAGetLastError());
     }
 }
 
@@ -74,14 +74,14 @@ char* receiveMessage(SOCKET client) {
 
     if (res > 0) {
         buffer[res] = '\0'; // Null-terminate received data
-        log_info("Bytes received: %d\n", res);
-        log_info("Received: %s", buffer);
+        log_info("[*] Bytes received: %d\n", res);
+        log_info("[+] Received: %s", buffer);
     } 
     else if (res == 0) {
-        log_error("Connection closed\n");
+        log_error("[!] Connection closed\n");
     } 
     else {
-        log_error("recv() failed: %ld\n", WSAGetLastError());
+        log_error("[!] recv() failed: %ld\n", WSAGetLastError());
     }
     
     

@@ -4,6 +4,7 @@
         "log.h": "c",
         "client.h": "c",
         "winsock2.h": "c",
-        "pthread.h": "c"
+        "pthread.h": "c",
+        "winsock.h": "c"
     }
 }

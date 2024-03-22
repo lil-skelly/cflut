@@ -9,6 +9,7 @@
 #include <winsock.h>
 #define MAX_PIXEL_STRING_LENGTH 30
 #define DEFAULT_CHANNELS 4
+
 // [STRUCTURES]
 /**
  * Structure to represent a color.
@@ -45,9 +46,6 @@ typedef struct {
 // [FUNCTION DECLARATIONS]
 image loadImage(char* filename);
 void resizeImage(image *image, int width, int height, int channels);
-
-void hexifyPixel(int x, int y, color *c, char* buffer);
-
 chunk* makeChunks(image image, int chunk_count);
 void processChunk(void* args_);
 // END OF [FUNCTION DECLARATIONS]
